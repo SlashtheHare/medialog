@@ -854,10 +854,10 @@ footer p { font-size: 11px; color: var(--ink-dim); letter-spacing: .05em; text-t
 <canvas id="aqua-canvas"></canvas>
 
 <!-- ── Image fish layer ── -->
-<div id="fish-layer" style="position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden;"></div>
+<div id="fish-layer" style="position:fixed;inset:0;pointer-events:none;z-index:6;overflow:hidden;"></div>
 
 <!-- ── Sphere fish layer ── -->
-<div id="sphere-fish-layer" style="position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden;"></div>
+<div id="sphere-fish-layer" style="position:fixed;inset:0;pointer-events:none;z-index:6;overflow:hidden;"></div>
 
 <!-- ── Pagedoll ── -->
 <img id="pagedoll" src="https://img1.picmix.com/output/stamp/normal/5/2/5/8/2608525_4124c.png"
@@ -1184,26 +1184,6 @@ footer p { font-size: 11px; color: var(--ink-dim); letter-spacing: .05em; text-t
     };
   }
   const spheres = Array.from({length: 7}, makeSphere);
-
-  /* Extra spheres in the top & middle — identical glass style, no fish inside */
-  const upperSpheres = Array.from({length: 10}, (_, i) => {
-    const zone = Math.random();
-    return {
-      x: 0.05 + Math.random() * 0.85,
-      y: zone < 0.5
-        ? Math.random() * 0.35          // top third
-        : 0.35 + Math.random() * 0.30,  // middle band
-      r: 45 + Math.random() * 90,
-      speed: 0.00003 + Math.random() * 0.00006,
-      wobble: Math.random() * Math.PI * 2,
-      wobbleSpeed: 0.004 + Math.random() * 0.007,
-      opacity: 0.55 + Math.random() * 0.30,
-      innerFish: null,
-      fishX: 0.5,
-      fishDir: 1,
-      fishAnim: Math.random() * Math.PI * 2,
-    };
-  });
   window._aeroSpheres = spheres;
 
   /* ════════════════════════════
@@ -1517,23 +1497,11 @@ footer p { font-size: 11px; color: var(--ink-dim); letter-spacing: .05em; text-t
       ctx.fill();
     });
 
-    // Glass spheres (bottom-origin)
+    // Glass spheres
     spheres.forEach(sp => {
       sp.y -= sp.speed;
       sp.wobble += sp.wobbleSpeed;
       if (sp.y < -0.3) Object.assign(sp, makeSphere(), {y: 1.1 + Math.random()*0.2});
-      drawSphere(sp);
-    });
-
-    // Upper glass spheres (top/middle zone — loop back into their zone)
-    upperSpheres.forEach(sp => {
-      sp.y -= sp.speed;
-      sp.wobble += sp.wobbleSpeed;
-      if (sp.y < -0.3) {
-        const zone = Math.random();
-        sp.y = zone < 0.5 ? 0.35 + Math.random() * 0.05 : 0.65 + Math.random() * 0.05;
-        sp.x = 0.05 + Math.random() * 0.85;
-      }
       drawSphere(sp);
     });
 
@@ -7662,10 +7630,11 @@ function injectGamePoster(slugId, url) {
     ? url.replace('/library_600x900.jpg', '/header.jpg')
     : null;
 
+  const isLocal = url.startsWith('covers/');
   const setupImg = (img) => {
     img.src = url;
     img.alt = '';
-    img.loading = 'lazy';
+    img.loading = isLocal ? 'eager' : 'lazy';
     img.onload = () => img.classList.add('loaded');
     if (headerFallback) {
       img.onerror = () => { img.onerror = null; img.src = headerFallback; };
@@ -7806,10 +7775,11 @@ function injectBookPoster(slugId, url) {
   if (!div) return;
   div.querySelector('.poster-placeholder')?.remove();
   if (div.querySelector('img.loaded')) return;
+  const isLocal = url.startsWith('covers/');
   const existing = div.querySelector('img');
-  if (existing) { existing.src = url; existing.classList.add('loaded'); return; }
+  if (existing) { existing.src = url; existing.loading = isLocal ? 'eager' : 'lazy'; existing.classList.add('loaded'); return; }
   const img = document.createElement('img');
-  img.src = url; img.alt = ''; img.loading = 'lazy';
+  img.src = url; img.alt = ''; img.loading = isLocal ? 'eager' : 'lazy';
   img.onload = () => img.classList.add('loaded');
   div.appendChild(img);
 }
