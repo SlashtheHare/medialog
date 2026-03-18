@@ -5444,7 +5444,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     else if (btn.dataset.tab === 'cartoons') renderCartoons();
     else if (btn.dataset.tab === 'movies') renderMovies();
     else if (btn.dataset.tab === 'games') { renderGames(); setTimeout(fetchGameCoversForActiveTab, 100); }
-    else if (btn.dataset.tab === 'books') { renderBooks(); setTimeout(reinjectBookPosters, 50); }
+    else if (btn.dataset.tab === 'books') { renderBooks(); setTimeout(() => { reinjectBookPosters(); fetchAllBookCovers(); }, 50); }
     else renderAnime();
     reinjectAllPosters();
   });
@@ -5471,12 +5471,14 @@ function reinjectGamePosters() {
 }
 
 function reinjectBookPosters() {
-  document.querySelectorAll('[id^="bkposter-"]').forEach(div => {
-    if (div.querySelector('img.loaded')) return;
-    const slugId = div.id.replace('bkposter-', '');
-    const title = slugId.replace(/-/g, ' ');
-    const cached = bookPosterCache[normalise(title)];
-    if (cached) injectBookPoster(slugId, cached);
+  /* Use the books array as the source of truth so titles are exact */
+  books.forEach(b => {
+    const slugId = slug(b.title);
+    const div = document.getElementById('bkposter-' + slugId);
+    if (!div || div.querySelector('img.loaded')) return;
+    const key = normalise(b.title);
+    const url = LOCAL_BOOK_COVERS[key] || bookPosterCache[key];
+    if (url) injectBookPoster(slugId, url);
   });
 }
 
