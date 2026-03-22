@@ -2378,6 +2378,8 @@ const cartoonTierMap = new Map([
   ['symbionictitan',                       {tier:'high',  cls:'t-high',  label:'High Priority'}],
   ['motorcity',                            {tier:'high',  cls:'t-high',  label:'High Priority'}],
   ['undone',                               {tier:'high',  cls:'t-high',  label:'High Priority'}],
+  ['peoplewatching',                       {tier:'high',  cls:'t-high',  label:'High Priority'}],
+  ['bunnicula',                            {tier:'asap',  cls:'t-asap',  label:'Watch ASAP'}],
 ]);
 
 /* ════════════════════════════════════════════
@@ -2537,6 +2539,12 @@ const WATCHING_CARTOONS_HARDCODED = [
   {tier:'solid', cls:'t-solid', label:'Solid Pick', title:'Fionna and Cake', tmdbId: null, desc:''},
   {tier:'asap',  cls:'t-asap',  label:'Watch ASAP', title:'The Amazing Digital Circus', tmdbId: null, desc:''},
   {tier:'high',  cls:'t-high',  label:'High Priority', title:'Knights of Guinevere', tmdbId: 315600, desc:''},
+];
+
+/* ── Extra cartoon watchlist entries (not in TMDB custom list) ── */
+const CARTOONS_EXTRA_WATCHLIST = [
+  { title: 'People Watching', tmdbId: null },
+  { title: 'Bunnicula',       tmdbId: null },
 ];
 
 /* ── Cartoons state ── */
@@ -3365,6 +3373,18 @@ async function fetchCartoonList() {
         return { title: data.name, tier, cls, label, tmdbId: data.tmdbId, desc: '' };
       });
     savePosterCache();
+
+    /* Merge any hardcoded extras not already present in the TMDB list */
+    const existingKeys = new Set(cartoonList.map(e => normalise(e.title)));
+    CARTOONS_EXTRA_WATCHLIST.forEach(e => {
+      const key = normalise(e.title);
+      if (existingKeys.has(key)) return;
+      const meta  = cartoonTierMap.get(key);
+      const tier  = meta?.tier  || 'solid';
+      const cls   = meta?.cls   || 't-solid';
+      const label = meta?.label || 'Solid Pick';
+      cartoonList.push({ title: e.title, tier, cls, label, tmdbId: e.tmdbId, desc: '' });
+    });
 
     /* Sort by tier priority then alphabetically */
     const tierPriority = {asap:0, high:1, solid:2, hold:3};
